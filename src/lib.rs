@@ -15,6 +15,8 @@ pub mod object;
 pub mod open;
 pub mod provider;
 pub mod seal;
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_support;
 
 pub use error::Zp1Error;
 pub use object::SuiteId;

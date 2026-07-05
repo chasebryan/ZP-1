@@ -75,8 +75,92 @@ fn decode_rejects_length_overflow() {
 }
 
 #[test]
+fn length_prefix_larger_than_remaining_input_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.chunk_len_offsets[0], u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn base_header_len_overflow_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.base_header_len_offset, u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn recipient_stanza_len_overflow_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.recipient_stanza_len_offsets[0], u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn public_manifest_len_overflow_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.public_manifest_len_offset, u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn chunk_len_overflow_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.chunk_len_offsets[0], u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn signature_block_len_overflow_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.signature_block_len_offset, u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn huge_recipient_count_rejected_before_allocation() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u16(&mut object, parts.recipient_count_offset, u16::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn huge_chunk_count_rejected_before_allocation() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u64(&mut object, parts.chunk_count_offset, u64::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn manifest_tag_len_must_be_48() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u16(&mut object, parts.manifest_tag_len_offset, 49);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
 fn encode_decode_encode_is_stable() {
     let object = valid_object();
     let decoded = Zp1Object::decode(&object).unwrap();
     assert_eq!(decoded.encode(), object);
+}
+
+fn put_u16(bytes: &mut [u8], offset: usize, value: u16) {
+    bytes[offset..offset + 2].copy_from_slice(&value.to_be_bytes());
+}
+
+fn put_u32(bytes: &mut [u8], offset: usize, value: u32) {
+    bytes[offset..offset + 4].copy_from_slice(&value.to_be_bytes());
+}
+
+fn put_u64(bytes: &mut [u8], offset: usize, value: u64) {
+    bytes[offset..offset + 8].copy_from_slice(&value.to_be_bytes());
 }

@@ -1,7 +1,9 @@
 mod common;
 
-use common::{fixture, TestKemPublicKey};
+use common::{fixture, sealed_fixture, TestKemPublicKey};
 use zp1::constants::{DEFAULT_CHUNK_SIZE, MAX_AAD_LEN, MAX_CHUNK_SIZE, MAX_RECIPIENTS};
+use zp1::object::Zp1Object;
+use zp1::open::{open, OpenOptions};
 use zp1::seal::{seal, validate_seal_limits, SealOptions};
 use zp1::{SuiteId, Zp1Error};
 
@@ -88,4 +90,32 @@ fn seal_rejects_aad_too_large_without_allocating_huge_memory_if_possible() {
     )
     .unwrap_err();
     assert_eq!(err, Zp1Error::LimitExceeded);
+}
+
+#[test]
+fn ciphertext_chunk_len_must_equal_plaintext_chunk_len_plus_16() {
+    let aad = b"aad";
+    let plaintext = b"chunk length guard";
+    let (mut fx, object) = sealed_fixture(b"ciphertext-len", 1, 8, aad, plaintext);
+    let mut decoded = Zp1Object::decode(&object).unwrap();
+    decoded.chunks[0].pop();
+    let err = open(
+        &mut fx.provider,
+        &fx.recipient_sks[0],
+        &fx.signer_pk,
+        aad,
+        &decoded.encode(),
+        OpenOptions::default(),
+    )
+    .unwrap_err();
+    assert_eq!(err, Zp1Error::Auth);
+}
+
+#[test]
+fn empty_plaintext_has_exactly_one_chunk() {
+    let (_fx, object) = sealed_fixture(b"empty-one-chunk", 1, 8, b"", b"");
+    let decoded = Zp1Object::decode(&object).unwrap();
+    assert_eq!(decoded.chunks.len(), 1);
+    assert_eq!(decoded.public_manifest.chunk_count, 1);
+    assert_eq!(decoded.public_manifest.plaintext_length, 0);
 }

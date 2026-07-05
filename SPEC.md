@@ -350,4 +350,6 @@ The deterministic vector in `test-vectors/zp1-core-insecure-test-provider-v0.jso
 
 NOT CRYPTOGRAPHICALLY SECURE. TEST VECTOR FOR WIRE FORMAT AND TRANSCRIPT STABILITY ONLY.
 
+This frozen vector defines the v0.1 reference transcript for the deterministic test provider only. It fixes the expected v0.1 wire bytes and transcript hashes for protocol-mechanics regression testing. It does not validate production cryptographic providers.
+
 The deterministic test provider in this repository is not cryptographic and must not be used as a production test-vector source.

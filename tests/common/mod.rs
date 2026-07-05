@@ -201,6 +201,9 @@ use zp1::open::{open, OpenOptions};
 use zp1::seal::{seal, SealOptions};
 use zp1::{SuiteId, Zp1Error};
 
+pub const POSITIVE_VECTOR_JSON: &str =
+    include_str!("../../test-vectors/zp1-core-insecure-test-provider-v0.json");
+
 pub struct Fixture {
     pub provider: InsecureTestProvider,
     pub recipient_pks: Vec<TestKemPublicKey>,
@@ -286,33 +289,44 @@ pub fn assert_auth(
 
 #[derive(Debug)]
 pub struct ObjectOffsets {
+    pub base_header_len_offset: usize,
     pub base_header_start: usize,
+    pub recipient_count_offset: usize,
+    pub recipient_stanza_len_offsets: Vec<usize>,
     pub recipient_stanza_starts: Vec<usize>,
+    pub public_manifest_len_offset: usize,
     pub public_manifest_start: usize,
     pub chunk_count_offset: usize,
+    pub chunk_len_offsets: Vec<usize>,
     pub chunk_starts: Vec<usize>,
     pub manifest_tag_len_offset: usize,
     pub manifest_tag_start: usize,
+    pub signature_block_len_offset: usize,
     pub signature_block_start: usize,
 }
 
 pub fn locate_object_parts(bytes: &[u8]) -> ObjectOffsets {
     let mut pos = 8usize;
+    let base_header_len_offset = pos;
     let base_header_len = read_u32(bytes, pos);
     pos += 4;
     let base_header_start = pos;
     pos += base_header_len;
 
+    let recipient_count_offset = pos;
     let recipient_count = usize::from(read_u16(bytes, pos));
     pos += 2;
+    let mut recipient_stanza_len_offsets = Vec::new();
     let mut recipient_stanza_starts = Vec::new();
     for _ in 0..recipient_count {
+        recipient_stanza_len_offsets.push(pos);
         let stanza_len = read_u32(bytes, pos);
         pos += 4;
         recipient_stanza_starts.push(pos);
         pos += stanza_len;
     }
 
+    let public_manifest_len_offset = pos;
     let public_manifest_len = read_u32(bytes, pos);
     pos += 4;
     let public_manifest_start = pos;
@@ -321,8 +335,10 @@ pub fn locate_object_parts(bytes: &[u8]) -> ObjectOffsets {
     let chunk_count_offset = pos;
     let chunk_count = usize::try_from(read_u64(bytes, pos)).unwrap();
     pos += 8;
+    let mut chunk_len_offsets = Vec::new();
     let mut chunk_starts = Vec::new();
     for _ in 0..chunk_count {
+        chunk_len_offsets.push(pos);
         let chunk_len = read_u32(bytes, pos);
         pos += 4;
         chunk_starts.push(pos);
@@ -335,6 +351,7 @@ pub fn locate_object_parts(bytes: &[u8]) -> ObjectOffsets {
     let manifest_tag_start = pos;
     pos += manifest_tag_len;
 
+    let signature_block_len_offset = pos;
     let signature_block_len = read_u32(bytes, pos);
     pos += 4;
     let signature_block_start = pos;
@@ -342,13 +359,19 @@ pub fn locate_object_parts(bytes: &[u8]) -> ObjectOffsets {
     assert_eq!(pos, bytes.len());
 
     ObjectOffsets {
+        base_header_len_offset,
         base_header_start,
+        recipient_count_offset,
+        recipient_stanza_len_offsets,
         recipient_stanza_starts,
+        public_manifest_len_offset,
         public_manifest_start,
         chunk_count_offset,
+        chunk_len_offsets,
         chunk_starts,
         manifest_tag_len_offset,
         manifest_tag_start,
+        signature_block_len_offset,
         signature_block_start,
     }
 }
@@ -367,6 +390,175 @@ pub fn archive_present_offset(bytes: &[u8]) -> usize {
 
 pub fn decoded(bytes: &[u8]) -> Zp1Object {
     Zp1Object::decode(bytes).unwrap()
+}
+
+pub fn positive_vector() -> PositiveVector {
+    PositiveVector::parse(POSITIVE_VECTOR_JSON)
+}
+
+#[derive(Debug, Clone)]
+pub struct PositiveVector {
+    pub warning: String,
+    pub suite_id: String,
+    pub chunk_size: u32,
+    pub provider_seed_hex: String,
+    pub recipient_label_hex: String,
+    pub signer_label_hex: String,
+    pub plaintext_hex: String,
+    pub aad_hex: String,
+    pub signer_public_key_hex: String,
+    pub recipient_public_key_hex: String,
+    pub sealed_object_hex: String,
+    pub base_header_hash_hex: String,
+    pub stanzas_hash_hex: String,
+    pub key_commitment_hex: String,
+    pub merkle_root_hex: String,
+    pub manifest_tag_hex: String,
+    pub signature_input_hash_hex: String,
+}
+
+impl PositiveVector {
+    pub fn parse(input: &str) -> Self {
+        Self {
+            warning: json_string(input, "warning"),
+            suite_id: json_string(input, "suite_id"),
+            chunk_size: json_u32(input, "chunk_size"),
+            provider_seed_hex: json_string(input, "provider_seed_hex"),
+            recipient_label_hex: json_string(input, "recipient_label_hex"),
+            signer_label_hex: json_string(input, "signer_label_hex"),
+            plaintext_hex: json_string(input, "plaintext_hex"),
+            aad_hex: json_string(input, "aad_hex"),
+            signer_public_key_hex: json_string(input, "signer_public_key_hex"),
+            recipient_public_key_hex: json_string(input, "recipient_public_key_hex"),
+            sealed_object_hex: json_string(input, "sealed_object_hex"),
+            base_header_hash_hex: json_string(input, "base_header_hash_hex"),
+            stanzas_hash_hex: json_string(input, "stanzas_hash_hex"),
+            key_commitment_hex: json_string(input, "key_commitment_hex"),
+            merkle_root_hex: json_string(input, "merkle_root_hex"),
+            manifest_tag_hex: json_string(input, "manifest_tag_hex"),
+            signature_input_hash_hex: json_string(input, "signature_input_hash_hex"),
+        }
+    }
+
+    pub fn seed(&self) -> Vec<u8> {
+        hex_decode(&self.provider_seed_hex)
+    }
+
+    pub fn recipient_label(&self) -> Vec<u8> {
+        hex_decode(&self.recipient_label_hex)
+    }
+
+    pub fn signer_label(&self) -> Vec<u8> {
+        hex_decode(&self.signer_label_hex)
+    }
+
+    pub fn aad(&self) -> Vec<u8> {
+        hex_decode(&self.aad_hex)
+    }
+
+    pub fn plaintext(&self) -> Vec<u8> {
+        hex_decode(&self.plaintext_hex)
+    }
+
+    pub fn sealed_object(&self) -> Vec<u8> {
+        hex_decode(&self.sealed_object_hex)
+    }
+}
+
+pub fn vector_provider_and_keys(
+    vector: &PositiveVector,
+) -> (
+    InsecureTestProvider,
+    TestKemSecretKey,
+    TestSignaturePublicKey,
+) {
+    let provider = InsecureTestProvider::new(&vector.seed());
+    let (_, recipient_sk) = provider.generate_kem_keypair(&vector.recipient_label());
+    let (signer_pk, _) = provider.generate_signature_keypair(&vector.signer_label());
+    (provider, recipient_sk, signer_pk)
+}
+
+#[derive(Debug, Clone)]
+pub struct NegativeVector {
+    pub warning: String,
+    pub name: String,
+    pub description: String,
+    pub source_positive_vector: String,
+    pub mutation: String,
+    pub aad_hex: String,
+    pub expected_error: String,
+    pub sealed_object_hex: String,
+}
+
+impl NegativeVector {
+    pub fn parse(input: &str) -> Self {
+        Self {
+            warning: json_string(input, "warning"),
+            name: json_string(input, "name"),
+            description: json_string(input, "description"),
+            source_positive_vector: json_string(input, "source_positive_vector"),
+            mutation: json_string(input, "mutation"),
+            aad_hex: json_string(input, "aad_hex"),
+            expected_error: json_string(input, "expected_error"),
+            sealed_object_hex: json_string(input, "sealed_object_hex"),
+        }
+    }
+}
+
+pub fn json_string(input: &str, key: &str) -> String {
+    let needle = format!("\"{key}\": \"");
+    let start = input
+        .find(&needle)
+        .unwrap_or_else(|| panic!("missing JSON key {key}"))
+        + needle.len();
+    let rest = &input[start..];
+    let end = rest
+        .find('"')
+        .unwrap_or_else(|| panic!("unterminated JSON string for {key}"));
+    rest[..end].to_string()
+}
+
+pub fn json_u32(input: &str, key: &str) -> u32 {
+    let needle = format!("\"{key}\": ");
+    let start = input
+        .find(&needle)
+        .unwrap_or_else(|| panic!("missing JSON key {key}"))
+        + needle.len();
+    let rest = &input[start..];
+    let end = rest
+        .find(|ch: char| !ch.is_ascii_digit())
+        .unwrap_or(rest.len());
+    rest[..end]
+        .parse()
+        .unwrap_or_else(|_| panic!("invalid JSON integer for {key}"))
+}
+
+pub fn hex_encode(bytes: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut out = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        out.push(char::from(HEX[usize::from(byte >> 4)]));
+        out.push(char::from(HEX[usize::from(byte & 0x0f)]));
+    }
+    out
+}
+
+pub fn hex_decode(input: &str) -> Vec<u8> {
+    assert_eq!(input.len() % 2, 0, "hex input must have even length");
+    input
+        .as_bytes()
+        .chunks_exact(2)
+        .map(|pair| (hex_nibble(pair[0]) << 4) | hex_nibble(pair[1]))
+        .collect()
+}
+
+fn hex_nibble(byte: u8) -> u8 {
+    match byte {
+        b'0'..=b'9' => byte - b'0',
+        b'a'..=b'f' => byte - b'a' + 10,
+        b'A'..=b'F' => byte - b'A' + 10,
+        _ => panic!("invalid hex byte"),
+    }
 }
 
 fn read_u16(bytes: &[u8], offset: usize) -> u16 {

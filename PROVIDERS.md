@@ -24,6 +24,8 @@ Side-channel resistance depends on provider implementation. ZP-1 uses constant-t
 
 A production provider feature must not be enabled until the provider implementation, key encoding rules, and error behavior have been reviewed against this boundary.
 
+Production provider integration should not begin until CI is green, positive vectors pass, negative vectors pass, fuzzing has run against decode/open/mutation targets, and provider key canonicalization is specified.
+
 Checklist:
 
 - [ ] ML-KEM-1024 provider is from a vetted implementation

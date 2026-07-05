@@ -1,0 +1,33 @@
+[package]
+name = "zp1-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+zp1 = { path = "..", features = ["test-utils"] }
+
+[[bin]]
+name = "decode_any"
+path = "fuzz_targets/decode_any.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "open_any"
+path = "fuzz_targets/open_any.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mutate_valid_vector"
+path = "fuzz_targets/mutate_valid_vector.rs"
+test = false
+doc = false
+bench = false

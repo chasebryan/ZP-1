@@ -14,6 +14,16 @@ The deterministic provider is tests-only and not cryptographic.
 Current validation covers protocol mechanics, canonical parsing, tamper detection, and limit checks.
 External cryptographic review has not occurred.
 
+## Validation Status
+
+- positive deterministic vector exists
+- negative corpus exists
+- wire stability tests exist
+- CI exists
+- fuzzing scaffold exists
+- production providers remain absent
+- external review remains absent
+
 ## Primitive Suite
 
 ZP-1 Core targets:
@@ -89,6 +99,7 @@ Production use requires a real provider for ML-KEM-1024 and ML-DSA-87. The defau
 cargo fmt --check
 cargo test
 cargo test --features test-utils
+cargo test --no-default-features
 cargo clippy --all-targets --features test-utils -- -D warnings
 cargo doc --no-deps
 ```

@@ -10,6 +10,11 @@ default = []
 test-utils = []
 oqs-provider = []
 
+[[bin]]
+name = "generate_test_vector"
+path = "src/bin/generate_test_vector.rs"
+required-features = ["test-utils"]
+
 [dependencies]
 aes-gcm-siv = { version = "0.11", features = ["std"] }
 hmac = "0.12"
