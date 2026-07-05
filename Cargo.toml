@@ -1,0 +1,27 @@
+[package]
+name = "zp1"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "ZP-1 post-quantum signed encryption envelope reference implementation"
+
+[features]
+default = []
+test-utils = []
+oqs-provider = []
+
+[dependencies]
+aes-gcm-siv = { version = "0.11", features = ["std"] }
+hmac = "0.12"
+rand = "0.8"
+rand_core = "0.6"
+sha2 = "0.10"
+subtle = "2.6"
+thiserror = "1"
+zeroize = "1.8"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+todo = "deny"
