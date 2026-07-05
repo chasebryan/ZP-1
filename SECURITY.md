@@ -6,6 +6,8 @@ The test provider is not cryptographic. It is deterministic fake crypto for prot
 
 Fuzzing and tests do not prove cryptographic security. They provide parser, mutation, transcript-drift, and failure-behavior regression evidence only.
 
+`VALIDATION.md` records test and workflow status but does not constitute a security audit.
+
 Production use is not recommended yet.
 
 Report vulnerabilities through GitHub issues until a private reporting process exists.

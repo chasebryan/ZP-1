@@ -26,6 +26,8 @@ A production provider feature must not be enabled until the provider implementat
 
 Production provider integration should not begin until CI is green, protocol-drift tests pass, positive vectors pass, negative vectors pass, exhaustive mutation tests pass, fuzz smoke has run, provider key canonicalization is specified, and an external review plan exists.
 
+Production provider integration must not begin until the pre-provider gate in `VALIDATION.md` is complete or explicitly waived.
+
 Checklist:
 
 - [ ] ML-KEM-1024 provider is from a vetted implementation

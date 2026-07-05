@@ -32,6 +32,8 @@ External cryptographic review has not occurred.
 
 Phase 4 adds a manual fuzz smoke runner, a manual fuzz smoke workflow, exhaustive mutation tests over the frozen positive object, a supply-chain policy, optional supply-chain workflow, and audit packet documentation.
 
+Validation evidence is tracked in `VALIDATION.md`.
+
 The project remains experimental and unaudited. Production PQC providers are still absent and external review has not occurred.
 
 ## Primitive Suite

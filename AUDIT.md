@@ -2,6 +2,8 @@
 
 Current status: experimental, unaudited, and not production-ready.
 
+Reviewers should start with `SPEC.md`, `docs/IMPLEMENTATION_INVARIANTS.md`, `test-vectors/`, and `VALIDATION.md`.
+
 ## Files And Modules To Review
 
 - `SPEC.md`
