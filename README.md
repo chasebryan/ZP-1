@@ -21,8 +21,18 @@ External cryptographic review has not occurred.
 - wire stability tests exist
 - CI exists
 - fuzzing scaffold exists
+- fuzz smoke runner exists
+- exhaustive mutation tests exist
+- audit packet docs exist
+- supply-chain policy docs exist
 - production providers remain absent
 - external review remains absent
+
+## Phase 4 Validation Status
+
+Phase 4 adds a manual fuzz smoke runner, a manual fuzz smoke workflow, exhaustive mutation tests over the frozen positive object, a supply-chain policy, optional supply-chain workflow, and audit packet documentation.
+
+The project remains experimental and unaudited. Production PQC providers are still absent and external review has not occurred.
 
 ## Primitive Suite
 
@@ -102,4 +112,15 @@ cargo test --features test-utils
 cargo test --no-default-features
 cargo clippy --all-targets --features test-utils -- -D warnings
 cargo doc --no-deps
+```
+
+Optional fuzz and supply-chain checks:
+
+```sh
+cargo install cargo-fuzz
+ZP1_FUZZ_SECONDS=30 ./scripts/run-fuzz-smoke.sh
+cargo install cargo-deny
+cargo deny check
+cargo install cargo-audit
+cargo audit
 ```

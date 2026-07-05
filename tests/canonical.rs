@@ -1,6 +1,7 @@
 mod common;
 
 use common::{archive_present_offset, decoded, locate_object_parts, sealed_fixture};
+use zp1::constants::{MAX_CHUNKS, MAX_RECIPIENTS};
 use zp1::object::Zp1Object;
 
 fn valid_object() -> Vec<u8> {
@@ -143,6 +144,109 @@ fn manifest_tag_len_must_be_48() {
     let mut object = valid_object();
     let parts = locate_object_parts(&object);
     put_u16(&mut object, parts.manifest_tag_len_offset, 49);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn top_level_base_header_len_exactly_remaining_plus_one_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    let remaining_after_prefix = object.len() - (parts.base_header_len_offset + 4);
+    put_u32(
+        &mut object,
+        parts.base_header_len_offset,
+        u32::try_from(remaining_after_prefix + 1).unwrap(),
+    );
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn recipient_stanza_len_exactly_remaining_plus_one_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    let offset = parts.recipient_stanza_len_offsets[0];
+    let remaining_after_prefix = object.len() - (offset + 4);
+    put_u32(
+        &mut object,
+        offset,
+        u32::try_from(remaining_after_prefix + 1).unwrap(),
+    );
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn public_manifest_len_exactly_remaining_plus_one_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    let remaining_after_prefix = object.len() - (parts.public_manifest_len_offset + 4);
+    put_u32(
+        &mut object,
+        parts.public_manifest_len_offset,
+        u32::try_from(remaining_after_prefix + 1).unwrap(),
+    );
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn chunk_len_exactly_remaining_plus_one_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    let offset = parts.chunk_len_offsets[0];
+    let remaining_after_prefix = object.len() - (offset + 4);
+    put_u32(
+        &mut object,
+        offset,
+        u32::try_from(remaining_after_prefix + 1).unwrap(),
+    );
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn signature_block_len_exactly_remaining_plus_one_fails() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    let remaining_after_prefix = object.len() - (parts.signature_block_len_offset + 4);
+    put_u32(
+        &mut object,
+        parts.signature_block_len_offset,
+        u32::try_from(remaining_after_prefix + 1).unwrap(),
+    );
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn u32_max_length_prefix_fails_before_allocation() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u32(&mut object, parts.public_manifest_len_offset, u32::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn u64_max_chunk_count_fails_before_allocation() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u64(&mut object, parts.chunk_count_offset, u64::MAX);
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn recipient_count_max_plus_one_fails_before_allocation() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u16(
+        &mut object,
+        parts.recipient_count_offset,
+        u16::try_from(MAX_RECIPIENTS + 1).unwrap(),
+    );
+    assert!(Zp1Object::decode(&object).is_err());
+}
+
+#[test]
+fn chunk_count_max_plus_one_fails_before_allocation() {
+    let mut object = valid_object();
+    let parts = locate_object_parts(&object);
+    put_u64(&mut object, parts.chunk_count_offset, MAX_CHUNKS + 1);
     assert!(Zp1Object::decode(&object).is_err());
 }
 

@@ -1,10 +1,10 @@
 # Security Policy
 
-ZP-1 is experimental and unaudited. Do not use this crate for production secrets yet.
+ZP-1 is experimental and unaudited. Do not use this crate for production secrets.
 
 The test provider is not cryptographic. It is deterministic fake crypto for protocol tests only and must not be used for production data.
 
-Fuzzing does not prove security. It is parser and failure-behavior hardening only.
+Fuzzing and tests do not prove cryptographic security. They provide parser, mutation, transcript-drift, and failure-behavior regression evidence only.
 
 Production use is not recommended yet.
 

@@ -2,8 +2,21 @@
 
 //! ZP-1 post-quantum signed encryption envelope reference implementation.
 //!
-//! This crate is experimental and unaudited. It does not ship a production
-//! post-quantum provider by default.
+//! This crate is experimental and unaudited. Do not use it for production
+//! secrets.
+//!
+//! The default build contains no production post-quantum provider. Production
+//! use requires a real provider for ML-KEM-1024, ML-DSA-87, and, for Archive
+//! mode, SLH-DSA level 5.
+//!
+//! The `test-utils` feature exposes `InsecureTestProvider`. That provider is
+//! NOT CRYPTOGRAPHICALLY SECURE. TESTS ONLY. It exists for deterministic wire
+//! format, transcript, parser, and failure-behavior tests.
+//!
+//! Public Open failures intentionally collapse parser, authentication, binding,
+//! and integrity failures to [`Zp1Error::Auth`]. The public error surface must
+//! not reveal whether a hostile object failed signature, AAD, recipient,
+//! commitment, manifest tag, Merkle, chunk tag, or parse checks.
 
 pub mod codec;
 pub mod constants;
